@@ -22,7 +22,7 @@ import Axios from "axios";
 //    })
 // }
 const instance = Axios.create({
-  baseURL: "http://localhost:8086",
+  baseURL: "https://officebuild.xxxx.com",
   timeout: 60000,
   headers: {
     Accept: "*/*"
@@ -30,7 +30,7 @@ const instance = Axios.create({
   responseType: "blob"
 });
 
-const exportExcel = (data, fileName = "") => {
+const exportExcel = (data, f = "") => {
   instance
     .post("/build_excel", data)
     .then(r => {
@@ -41,11 +41,23 @@ const exportExcel = (data, fileName = "") => {
         });
         return;
       } else if (blob.type === "application/vnd.ms-excel") {
-        const aLink = document.createElement("a");
-        aLink.href = URL.createObjectURL(blob);
-        aLink.setAttribute("download", fileName + ".xlsx"); // 设置下载文件名称
-        document.body.appendChild(aLink);
-        aLink.click();
+        let fileName = f + ".xlsx";
+
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        }
+        // for Non-IE (chrome, firefox etc.)
+        else {
+          let a = document.createElement("a");
+          document.body.appendChild(a);
+          a.style = "display: none";
+          let url = window.URL.createObjectURL(blob);
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        }
         return;
       }
       alert("未知数据");
